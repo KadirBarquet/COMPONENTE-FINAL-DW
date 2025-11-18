@@ -1,0 +1,15 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.example
+package-lock.json
+.sql
+.db
+.vscode
+.json
+.DS_Store
+.env.local  
+.sqlite
+.idea
