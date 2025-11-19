@@ -16,9 +16,9 @@ export default function Footer() {
   const footerLinks = {
     product: [
       { name: 'Encuestas', path: '/student/surveys' },
-      { name: 'Dashboard', path: '/admin/dashboard' },
+      { name: 'Dashboard', path: '/dashboard' },
       { name: 'Usuarios', path: '/admin/users' },
-      { name: 'Estadísticas', path: '/admin/dashboard' },
+      { name: 'Estadísticas', path: '/dashboard' },
     ],
     resources: [
       { name: 'Documentación', path: '#', external: true },
@@ -65,13 +65,14 @@ export default function Footer() {
             {/* Social Links */}
             <div className="flex items-center gap-3">
               {socialLinks.map((social) => (
-                <a>
+                <a
                   key={social.label}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-gray-800 p-2 rounded-lg hover:bg-blue-600 transition-all duration-200 transform hover:scale-110"
                   aria-label={social.label}
+                >
                   <social.icon className="w-5 h-5" />
                 </a>
               ))}
@@ -105,12 +106,12 @@ export default function Footer() {
             <ul className="space-y-2">
               {footerLinks.resources.map((link) => (
                 <li key={link.name}>
-                  <a>
+                  <a
                     href={link.path}
                     target={link.external ? '_blank' : '_self'}
                     rel={link.external ? 'noopener noreferrer' : ''}
                     className="text-gray-400 hover:text-white transition-colors duration-200 text-sm flex items-center gap-1"
-
+                  >
                     {link.name}
                     {link.external && <ExternalLink className="w-3 h-3" />}
                   </a>
