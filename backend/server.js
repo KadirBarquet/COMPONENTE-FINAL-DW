@@ -91,7 +91,7 @@ const startServer = async () => {
 ║      Puerto: ${PORT}                     ║
 ║      URL: http://localhost:${PORT}       ║
 ║      Base de datos: ${dbTernary}         ║
-║      ${new Date().toLocaleString()}             ║
+║      ${new Date().toLocaleString()}              ║
 ╚═══════════════════════════════════════╝
 
   Endpoints disponibles:
