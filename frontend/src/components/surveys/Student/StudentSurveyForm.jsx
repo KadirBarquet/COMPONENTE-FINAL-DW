@@ -20,12 +20,12 @@ export default function StudentSurveyForm() {
   const [formData, setFormData] = useState({
     has_used_chatbot: true,
     chatbots_used: [],
-    usage_frequency: 'Occasionally',
+    usage_frequency: 'Ocasionalmente',
     usefulness_rating: 3,
     tasks_used_for: [],
     overall_experience: 3,
     preferred_chatbot: '',
-    effectiveness_comparison: 'More effective',
+    effectiveness_comparison: 'Más efectivo',
     will_continue_using: true,
     would_recommend: true,
     additional_comments: ''
@@ -38,20 +38,20 @@ export default function StudentSurveyForm() {
 
   // Opciones para los selects
   const chatbotOptions = ['ChatGPT 3.5', 'ChatGPT 4', 'Bing Chat', 'Bard', 'Claude'];
-  const frequencyOptions = ['Never', 'Rarely', 'Occasionally', 'Frequently', 'Very frequently'];
+  const frequencyOptions = ['Nunca', 'Casi nunca', 'Ocasionalmente', 'Frecuentemente', 'Muy frecuentemente'];
   const tasksOptions = [
-    'Understanding concepts',
+    'Comprender conceptos',
     'Debugging',
-    'Learning new languages',
-    'Explaining class examples',
-    'Generating exercises code'
+    'Aprender nuevos lenguajes',
+    'Explicando ejemplos de clase',
+    'Generando código de ejercicios'
   ];
   const effectivenessOptions = [
-    'Much less effective',
-    'Less effective',
-    'Equally effective',
-    'More effective',
-    'Much more effective'
+    'Mucho menos efectivo',
+    'Menos efectivo',
+    'Igualmente efectivo',
+    'Más efectivo',
+    'Mucho más efectivo'
   ];
 
   useEffect(() => {
@@ -69,12 +69,12 @@ export default function StudentSurveyForm() {
       setFormData({
         has_used_chatbot: survey.has_used_chatbot,
         chatbots_used: survey.chatbots_used || [],
-        usage_frequency: survey.usage_frequency || 'Occasionally',
+        usage_frequency: survey.usage_frequency || 'Ocasionalmente',
         usefulness_rating: survey.usefulness_rating || 3,
         tasks_used_for: survey.tasks_used_for || [],
         overall_experience: survey.overall_experience || 3,
         preferred_chatbot: survey.preferred_chatbot || '',
-        effectiveness_comparison: survey.effectiveness_comparison || 'More effective',
+        effectiveness_comparison: survey.effectiveness_comparison || 'Más efectivo',
         will_continue_using: survey.will_continue_using,
         would_recommend: survey.would_recommend,
         additional_comments: survey.additional_comments || ''

@@ -26,14 +26,14 @@ export default function TeacherSurveyForm() {
     purposes: [],
     outcomes: [],
     challenges: [],
-    likelihood_future_use: 'Very likely',
+    likelihood_future_use: 'Muy probable',
     advantages: [],
     concerns: [],
     resources_needed: [],
-    age_range: '25-34 years',
-    institution_type: 'Public university',
+    age_range: '25-34 años',
+    institution_type: 'Universidad Pública',
     country: '',
-    years_experience: '3-5 years',
+    years_experience: '3-5 años',
     additional_comments: ''
   });
 
@@ -46,72 +46,72 @@ export default function TeacherSurveyForm() {
   const chatbotOptions = ['ChatGPT 3.5', 'ChatGPT 4', 'Bing Chat', 'Bard', 'Claude', 'Gemini'];
   
   const coursesOptions = [
-    'Programming',
-    'Introduction to Software Engineering',
-    'Software Requirements Engineering',
-    'Software Design',
-    'Software Architecture',
-    'Model-Driven Software Development',
-    'Software Testing',
-    'Software Project Management',
-    'Software Quality',
-    'Software Maintenance'
+    'Programación',
+    'Introducción a la Ingeniería de Software',
+    'Ingeniería de Requisitos de Software',
+    'Diseño de Software',
+    'Arquitectura de Software',
+    'Desarrollo Dirigido por Modelos',
+    'Pruebas de Software',
+    'Gestión de Proyectos de Software',
+    'Calidad de Software',
+    'Mantenimiento de Software'
   ];
 
   const purposesOptions = [
-    'Providing support to students in solving exercises',
-    'Offering personalized feedback on students code',
-    'Guiding students in the learning process',
-    'Detecting errors and common problems',
-    'Customizing learning pace for each student'
+    'Brindar apoyo a los estudiantes en la resolución de ejercicios.',
+    'Proporcionar retroalimentación personalizada a los estudiantes en el código.',
+    'Guía a los estudiantes en el proceso de aprendizaje.',
+    'Detectar errores y problemas comunes.',
+    'Personalizar la velocidad de aprendizaje para cada estudiante.'
   ];
 
   const outcomesOptions = [
-    'Improvement in students academic performance',
-    'Increased participation and interaction in class',
-    'Reduction in teacher workload',
-    'Enhancement in student satisfaction'
+    'Mejora en el rendimiento académico de los estudiantes.',
+    'Aumento de la participación y interacción en la clase.',
+    'Reducción de la carga laboral del profesor.',
+    'Mejora en la satisfacción del estudiante.'
   ];
 
   const challengesOptions = [
-    'Difficulty in configuring or integrating the chatbot',
-    'Limitations in chatbot capabilities',
-    'Lack of accuracy in responses',
-    'Difficulty adapting the chatbot to different levels',
-    'Lack of resources or technical support'
+    'Dificultad para configurar o integrar el chatbot.',
+    'Limitaciones en las capacidades del chatbot.',
+    'Falta de precisión en las respuestas.',
+    'Dificultad para adaptar el chatbot a diferentes niveles.',
+    'Falta de recursos o soporte técnico.'
   ];
 
-  const likelihoodOptions = ['Very likely', 'Likely', 'Unlikely', 'Very unlikely'];
+  const likelihoodOptions = ['Muy probable', 'Probable', 'Imposible', 'Muy improbable'];
 
   const advantagesOptions = [
-    'Personalization of learning',
-    '24/7 support for students',
-    'Early detection of errors',
-    'Freeing up time for teachers',
-    'Fostering autonomy and individual learning pace'
+    'Personalización del aprendizaje',
+    '24/7 soporte para los estudiantes',
+    'Detección temprana de errores',
+    'Liberación de tiempo para los profesores',
+    'Fomento de la autonomía y la velocidad de aprendizaje individual'
   ];
 
   const concernsOptions = [
-    'Implementation and maintenance costs',
-    'Possible negative impact on teaching quality',
-    'Difficulty in assessing true student learning',
-    'Data privacy and security issues',
-    'Resistance or lack of acceptance',
-    'Technical response errors from chatbots'
+    'Costos de implementación y mantenimiento',
+    'Posible impacto negativo en la calidad del aprendizaje',
+    'Dificultad para evaluar la aprendizaje real de los estudiantes',
+    'Problemas de privacidad y seguridad de los datos',
+    'Resistencia o falta de aceptación',
+    'Errores técnicos de respuesta de los chatbots'
   ];
 
   const resourcesOptions = [
-    'Training and education on AI chatbots',
-    'Guides and documentation',
-    'Platforms or educational tools integrated with AI',
-    'Technical support and assistance',
-    'Research and case studies',
-    'Training in the use of prompts'
+    'Capacitación y educación sobre los chatbots de IA',
+    'Guías y documentación',
+    'Plataformas o herramientas educativas integradas con AI',
+    'Soporte técnico y asistencia',
+    'Investigación y casos de estudio',
+    'Formación en el uso de las solicitudes'
   ];
 
-  const ageRangeOptions = ['18-24 years', '25-34 years', '35-44 years', '45-54 years', '55 years or older'];
-  const institutionOptions = ['Public university', 'Private university', 'Other'];
-  const experienceOptions = ['0-2 years', '3-5 years', '6-10 years', '11-15 years', 'More than 15 years'];
+  const ageRangeOptions = ['18-24 años', '25-34 años', '35-44 años', '45-54 años', '55 años o más antiguos'];
+  const institutionOptions = ['Universidad Pública', 'Universidad Privada', 'Otro'];
+  const experienceOptions = ['0-2 años', '3-5 años', '6-10 años', '11-15 años', 'Más de 15 años'];
 
   useEffect(() => {
     if (isEditMode) {
@@ -132,14 +132,14 @@ export default function TeacherSurveyForm() {
         purposes: survey.purposes || [],
         outcomes: survey.outcomes || [],
         challenges: survey.challenges || [],
-        likelihood_future_use: survey.likelihood_future_use || 'Very likely',
+        likelihood_future_use: survey.likelihood_future_use || 'Muy probable',
         advantages: survey.advantages || [],
         concerns: survey.concerns || [],
         resources_needed: survey.resources_needed || [],
-        age_range: survey.age_range || '25-34 years',
-        institution_type: survey.institution_type || 'Public university',
+        age_range: survey.age_range || '25-34 años',
+        institution_type: survey.institution_type || 'Universidad Pública',
         country: survey.country || '',
-        years_experience: survey.years_experience || '3-5 years',
+        years_experience: survey.years_experience || '3-5 años',
         additional_comments: survey.additional_comments || ''
       });
     } catch (error) {
