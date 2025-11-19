@@ -22,19 +22,39 @@ import {
     RefreshCw
 } from 'lucide-react';
 import authService from '../services/authService';
+// Importaciones para contexto, internacionalización y exportación
+import { useTheme } from '../context/ThemeContext';
+import { getTranslation } from '../i18n/translations';
+import excelExportService from '../services/excelExportService';
 
 export default function Settings() {
     const navigate = useNavigate();
     const currentUser = authService.getCurrentUser();
+    
+    // Usar el contexto de tema/idioma
+    const { 
+        theme, 
+        language, 
+        fontSize, 
+        compactMode, 
+        changeTheme, 
+        changeLanguage, 
+        changeFontSize, 
+        changeCompactMode 
+    } = useTheme();
+    
+    // Función de ayuda para la traducción
+    const t = (key) => getTranslation(language, key);
 
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState(null);
     const [activeTab, setActiveTab] = useState('general');
 
-    // Estados de configuración
+    // Estados de configuración local. Los valores de tema/idioma se sincronizan
+    // con el ThemeContext, pero se mantienen aquí para el control de la UI de los formularios.
     const [settings, setSettings] = useState({
         // General
-        language: 'es',
+        language: language,
         timezone: 'America/Guayaquil',
         dateFormat: 'DD/MM/YYYY',
         
@@ -45,9 +65,9 @@ export default function Settings() {
         weeklyReports: false,
         
         // Apariencia
-        theme: 'light',
-        compactMode: false,
-        fontSize: 'medium',
+        theme: theme,
+        compactMode: compactMode,
+        fontSize: fontSize,
         
         // Privacidad
         profileVisibility: 'private',
@@ -59,24 +79,50 @@ export default function Settings() {
     const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
     useEffect(() => {
+        // Inicializar con los valores actuales del contexto si no hay settings
+        setSettings(prev => ({
+            ...prev,
+            language: language,
+            theme: theme,
+            fontSize: fontSize,
+            compactMode: compactMode
+        }));
+
         loadSettings();
-    }, []);
+    }, [language, theme, fontSize, compactMode]); // Dependencia del contexto
 
     const loadSettings = () => {
-        // Cargar configuraciones desde localStorage
         const savedSettings = localStorage.getItem('userSettings');
         if (savedSettings) {
-            setSettings(JSON.parse(savedSettings));
+            const loadedSettings = JSON.parse(savedSettings);
+            
+            // Sincronizar ThemeContext si los valores guardados son diferentes
+            if (loadedSettings.language && loadedSettings.language !== language) changeLanguage(loadedSettings.language);
+            if (loadedSettings.theme && loadedSettings.theme !== theme) changeTheme(loadedSettings.theme);
+            if (loadedSettings.fontSize && loadedSettings.fontSize !== fontSize) changeFontSize(loadedSettings.fontSize);
+            if (loadedSettings.compactMode !== undefined && loadedSettings.compactMode !== compactMode) changeCompactMode(loadedSettings.compactMode);
+
+            // Establecer el estado local con los valores guardados
+            setSettings({
+                ...loadedSettings,
+                language: loadedSettings.language || language,
+                theme: loadedSettings.theme || theme,
+                fontSize: loadedSettings.fontSize || fontSize,
+                compactMode: loadedSettings.compactMode !== undefined ? loadedSettings.compactMode : compactMode
+            });
         }
     };
 
     const saveSettings = () => {
         setLoading(true);
         try {
+            // Guardar el estado completo en localStorage.
+            // Los cambios de tema/idioma ya están en 'settings' y han actualizado el ThemeContext.
             localStorage.setItem('userSettings', JSON.stringify(settings));
-            showNotification('Configuración guardada exitosamente', 'success');
+            
+            showNotification(t('msg_settings_saved'), 'success');
         } catch (error) {
-            showNotification('Error al guardar configuración', 'error');
+            showNotification(t('msg_settings_error'), 'error');
         } finally {
             setLoading(false);
         }
@@ -98,9 +144,18 @@ export default function Settings() {
             showEmail: false,
             allowAnalytics: true
         };
+        
+        // 1. Actualizar ThemeContext con valores por defecto
+        changeTheme(defaultSettings.theme);
+        changeLanguage(defaultSettings.language);
+        changeFontSize(defaultSettings.fontSize);
+        changeCompactMode(defaultSettings.compactMode);
+
+        // 2. Actualizar estado local y localStorage
         setSettings(defaultSettings);
         localStorage.setItem('userSettings', JSON.stringify(defaultSettings));
-        showNotification('Configuración restaurada a valores predeterminados', 'success');
+        
+        showNotification(t('msg_settings_saved'), 'success');
     };
 
     const showNotification = (message, type = 'success') => {
@@ -109,6 +164,13 @@ export default function Settings() {
     };
 
     const handleSettingChange = (key, value) => {
+        // 1. Actualizar ThemeContext si es una propiedad de tema/idioma
+        if (key === 'language') changeLanguage(value);
+        if (key === 'theme') changeTheme(value);
+        if (key === 'fontSize') changeFontSize(value);
+        if (key === 'compactMode') changeCompactMode(value);
+        
+        // 2. Actualizar estado local
         setSettings(prev => ({
             ...prev,
             [key]: value
@@ -116,41 +178,34 @@ export default function Settings() {
     };
 
     const exportData = () => {
-        const userData = {
-            user: currentUser,
-            settings: settings,
-            exportDate: new Date().toISOString()
-        };
+        // Utilizar el servicio de exportación a Excel
+        const result = excelExportService.exportUserData(currentUser, settings);
         
-        const dataStr = JSON.stringify(userData, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `chatbots-survey-data-${Date.now()}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-        
-        showNotification('Datos exportados exitosamente', 'success');
+        if (result.success) {
+            showNotification(t('msg_data_exported'), 'success');
+        } else {
+            // El error.message viene del servicio, si no, usa el genérico
+            showNotification(result.error || t('msg_settings_error'), 'error');
+        }
     };
 
     const handleDeleteAccount = () => {
         if (deleteConfirmation === currentUser.username) {
-            // Aquí deberías llamar a un endpoint para eliminar la cuenta
+            // Simular eliminación de cuenta y cerrar sesión
             authService.logout();
             navigate('/login');
-            showNotification('Cuenta eliminada exitosamente', 'success');
+            showNotification(t('msg_account_deleted'), 'success');
         } else {
-            showNotification('El nombre de usuario no coincide', 'error');
+            showNotification(t('msg_username_mismatch'), 'error');
         }
     };
 
     const tabs = [
-        { id: 'general', name: 'General', icon: SettingsIcon },
-        { id: 'notifications', name: 'Notificaciones', icon: Bell },
-        { id: 'appearance', name: 'Apariencia', icon: Palette },
-        { id: 'privacy', name: 'Privacidad', icon: Shield },
-        { id: 'data', name: 'Datos', icon: Database }
+        { id: 'general', name: t('settings_general'), icon: SettingsIcon },
+        { id: 'notifications', name: t('settings_notifications'), icon: Bell },
+        { id: 'appearance', name: t('settings_appearance'), icon: Palette },
+        { id: 'privacy', name: t('settings_privacy'), icon: Shield },
+        { id: 'data', name: t('settings_data'), icon: Database }
     ];
 
     return (
@@ -163,8 +218,8 @@ export default function Settings() {
                             <SettingsIcon className="w-8 h-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800">Configuración</h1>
-                            <p className="text-gray-600">Personaliza tu experiencia en la plataforma</p>
+                            <h1 className="text-3xl font-bold text-gray-800">{t('settings_title')}</h1>
+                            <p className="text-gray-600">{t('settings_subtitle')}</p>
                         </div>
                     </div>
                 </div>
@@ -213,30 +268,30 @@ export default function Settings() {
                                     <div>
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                                             <SettingsIcon className="w-6 h-6 text-blue-600" />
-                                            Configuración General
+                                            {t('settings_general')}
                                         </h2>
-                                        <p className="text-gray-600 mb-6">Ajusta las preferencias básicas de tu cuenta</p>
+                                        <p className="text-gray-600 mb-6">{t('settings_subtitle')}</p>
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             <Globe className="inline w-4 h-4 mr-2" />
-                                            Idioma
+                                            {t('settings_language')}
                                         </label>
                                         <select
                                             value={settings.language}
                                             onChange={(e) => handleSettingChange('language', e.target.value)}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         >
-                                            <option value="es">Español</option>
-                                            <option value="en">English</option>
-                                            <option value="pt">Português</option>
+                                            <option value="es">{t('settings_language_spanish')}</option>
+                                            <option value="en">{t('settings_language_english')}</option>
+                                            <option value="pt">{t('settings_language_portuguese')}</option>
                                         </select>
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Zona Horaria
+                                            {t('settings_timezone')}
                                         </label>
                                         <select
                                             value={settings.timezone}
@@ -253,7 +308,7 @@ export default function Settings() {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Formato de Fecha
+                                            {t('settings_date_format')}
                                         </label>
                                         <select
                                             value={settings.dateFormat}
@@ -274,7 +329,7 @@ export default function Settings() {
                                     <div>
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                                             <Bell className="w-6 h-6 text-blue-600" />
-                                            Preferencias de Notificaciones
+                                            {t('settings_notifications')}
                                         </h2>
                                         <p className="text-gray-600 mb-6">Controla cómo y cuándo recibes notificaciones</p>
                                     </div>
@@ -284,13 +339,14 @@ export default function Settings() {
                                             <div className="flex items-start gap-3">
                                                 <Mail className="w-5 h-5 text-gray-600 mt-0.5" />
                                                 <div>
-                                                    <p className="font-medium text-gray-800">Notificaciones por Email</p>
-                                                    <p className="text-sm text-gray-600">Recibe actualizaciones importantes por correo</p>
+                                                    <p className="font-medium text-gray-800">{t('settings_email_notifications')}</p>
+                                                    <p className="text-sm text-gray-600">{t('settings_email_notifications_desc')}</p>
                                                 </div>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
+                                                    name="emailNotifications"
                                                     checked={settings.emailNotifications}
                                                     onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
                                                     className="sr-only peer"
@@ -303,13 +359,14 @@ export default function Settings() {
                                             <div className="flex items-start gap-3">
                                                 <Bell className="w-5 h-5 text-gray-600 mt-0.5" />
                                                 <div>
-                                                    <p className="font-medium text-gray-800">Recordatorios de Encuestas</p>
-                                                    <p className="text-sm text-gray-600">Te recordaremos completar encuestas pendientes</p>
+                                                    <p className="font-medium text-gray-800">{t('settings_survey_reminders')}</p>
+                                                    <p className="text-sm text-gray-600">{t('settings_survey_reminders_desc')}</p>
                                                 </div>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
+                                                    name="surveyReminders"
                                                     checked={settings.surveyReminders}
                                                     onChange={(e) => handleSettingChange('surveyReminders', e.target.checked)}
                                                     className="sr-only peer"
@@ -322,13 +379,14 @@ export default function Settings() {
                                             <div className="flex items-start gap-3">
                                                 <AlertCircle className="w-5 h-5 text-gray-600 mt-0.5" />
                                                 <div>
-                                                    <p className="font-medium text-gray-800">Actualizaciones del Sistema</p>
-                                                    <p className="text-sm text-gray-600">Nuevas funciones y mejoras de la plataforma</p>
+                                                    <p className="font-medium text-gray-800">{t('settings_system_updates')}</p>
+                                                    <p className="text-sm text-gray-600">{t('settings_system_updates_desc')}</p>
                                                 </div>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
+                                                    name="systemUpdates"
                                                     checked={settings.systemUpdates}
                                                     onChange={(e) => handleSettingChange('systemUpdates', e.target.checked)}
                                                     className="sr-only peer"
@@ -341,13 +399,14 @@ export default function Settings() {
                                             <div className="flex items-start gap-3">
                                                 <Mail className="w-5 h-5 text-gray-600 mt-0.5" />
                                                 <div>
-                                                    <p className="font-medium text-gray-800">Reportes Semanales</p>
-                                                    <p className="text-sm text-gray-600">Resumen semanal de tu actividad</p>
+                                                    <p className="font-medium text-gray-800">{t('settings_weekly_reports')}</p>
+                                                    <p className="text-sm text-gray-600">{t('settings_weekly_reports_desc')}</p>
                                                 </div>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
+                                                    name="weeklyReports"
                                                     checked={settings.weeklyReports}
                                                     onChange={(e) => handleSettingChange('weeklyReports', e.target.checked)}
                                                     className="sr-only peer"
@@ -365,14 +424,14 @@ export default function Settings() {
                                     <div>
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                                             <Palette className="w-6 h-6 text-blue-600" />
-                                            Apariencia
+                                            {t('settings_appearance')}
                                         </h2>
                                         <p className="text-gray-600 mb-6">Personaliza el aspecto de la interfaz</p>
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-3">
-                                            Tema
+                                            {t('settings_theme')}
                                         </label>
                                         <div className="grid grid-cols-3 gap-4">
                                             <button
@@ -384,7 +443,7 @@ export default function Settings() {
                                                 }`}
                                             >
                                                 <Sun className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
-                                                <p className="text-sm font-medium text-center">Claro</p>
+                                                <p className="text-sm font-medium text-center">{t('settings_theme_light')}</p>
                                             </button>
                                             <button
                                                 onClick={() => handleSettingChange('theme', 'dark')}
@@ -395,7 +454,7 @@ export default function Settings() {
                                                 }`}
                                             >
                                                 <Moon className="w-8 h-8 mx-auto mb-2 text-indigo-600" />
-                                                <p className="text-sm font-medium text-center">Oscuro</p>
+                                                <p className="text-sm font-medium text-center">{t('settings_theme_dark')}</p>
                                             </button>
                                             <button
                                                 onClick={() => handleSettingChange('theme', 'auto')}
@@ -413,27 +472,28 @@ export default function Settings() {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Tamaño de Fuente
+                                            {t('settings_font_size')}
                                         </label>
                                         <select
                                             value={settings.fontSize}
                                             onChange={(e) => handleSettingChange('fontSize', e.target.value)}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         >
-                                            <option value="small">Pequeña</option>
-                                            <option value="medium">Media</option>
-                                            <option value="large">Grande</option>
+                                            <option value="small">{t('settings_font_small')}</option>
+                                            <option value="medium">{t('settings_font_medium')}</option>
+                                            <option value="large">{t('settings_font_large')}</option>
                                         </select>
                                     </div>
 
                                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                                         <div>
-                                            <p className="font-medium text-gray-800">Modo Compacto</p>
-                                            <p className="text-sm text-gray-600">Reduce el espaciado en la interfaz</p>
+                                            <p className="font-medium text-gray-800">{t('settings_compact_mode')}</p>
+                                            <p className="text-sm text-gray-600">{t('settings_compact_mode_desc')}</p>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
                                                 type="checkbox"
+                                                name="compactMode"
                                                 checked={settings.compactMode}
                                                 onChange={(e) => handleSettingChange('compactMode', e.target.checked)}
                                                 className="sr-only peer"
@@ -450,23 +510,23 @@ export default function Settings() {
                                     <div>
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                                             <Shield className="w-6 h-6 text-blue-600" />
-                                            Privacidad y Seguridad
+                                            {t('settings_privacy')} y Seguridad
                                         </h2>
                                         <p className="text-gray-600 mb-6">Controla quién puede ver tu información</p>
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Visibilidad del Perfil
+                                            {t('settings_profile_visibility')}
                                         </label>
                                         <select
                                             value={settings.profileVisibility}
                                             onChange={(e) => handleSettingChange('profileVisibility', e.target.value)}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         >
-                                            <option value="public">Público</option>
-                                            <option value="private">Privado</option>
-                                            <option value="contacts">Solo contactos</option>
+                                            <option value="public">{t('settings_profile_public')}</option>
+                                            <option value="private">{t('settings_profile_private')}</option>
+                                            <option value="contacts">{t('settings_profile_contacts')}</option>
                                         </select>
                                     </div>
 
@@ -475,13 +535,14 @@ export default function Settings() {
                                             <div className="flex items-start gap-3">
                                                 <Eye className="w-5 h-5 text-gray-600 mt-0.5" />
                                                 <div>
-                                                    <p className="font-medium text-gray-800">Mostrar Email</p>
-                                                    <p className="text-sm text-gray-600">Tu email será visible en tu perfil público</p>
+                                                    <p className="font-medium text-gray-800">{t('settings_show_email')}</p>
+                                                    <p className="text-sm text-gray-600">{t('settings_show_email_desc')}</p>
                                                 </div>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
+                                                    name="showEmail"
                                                     checked={settings.showEmail}
                                                     onChange={(e) => handleSettingChange('showEmail', e.target.checked)}
                                                     className="sr-only peer"
@@ -494,13 +555,14 @@ export default function Settings() {
                                             <div className="flex items-start gap-3">
                                                 <Database className="w-5 h-5 text-gray-600 mt-0.5" />
                                                 <div>
-                                                    <p className="font-medium text-gray-800">Permitir Analíticas</p>
-                                                    <p className="text-sm text-gray-600">Ayúdanos a mejorar la plataforma</p>
+                                                    <p className="font-medium text-gray-800">{t('settings_allow_analytics')}</p>
+                                                    <p className="text-sm text-gray-600">{t('settings_allow_analytics_desc')}</p>
                                                 </div>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
+                                                    name="allowAnalytics"
                                                     checked={settings.allowAnalytics}
                                                     onChange={(e) => handleSettingChange('allowAnalytics', e.target.checked)}
                                                     className="sr-only peer"
@@ -522,7 +584,7 @@ export default function Settings() {
                                                     onClick={() => navigate('/profile')}
                                                     className="mt-3 text-sm text-yellow-800 font-medium hover:underline"
                                                 >
-                                                    Cambiar contraseña →
+                                                    {t('btn_change_password')} →
                                                 </button>
                                             </div>
                                         </div>
@@ -536,35 +598,37 @@ export default function Settings() {
                                     <div>
                                         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                                             <Database className="w-6 h-6 text-blue-600" />
-                                            Gestión de Datos
+                                            {t('settings_data')}
                                         </h2>
                                         <p className="text-gray-600 mb-6">Administra tu información y privacidad</p>
                                     </div>
 
                                     <div className="space-y-4">
                                         <button
+                                            type="button"
                                             onClick={exportData}
                                             className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
                                                 <Download className="w-5 h-5 text-blue-600" />
                                                 <div className="text-left">
-                                                    <p className="font-medium text-gray-800">Exportar Datos</p>
-                                                    <p className="text-sm text-gray-600">Descarga una copia de tu información</p>
+                                                    <p className="font-medium text-gray-800">{t('settings_export_data')}</p>
+                                                    <p className="text-sm text-gray-600">{t('settings_export_data_desc')}</p>
                                                 </div>
                                             </div>
                                             <Download className="w-5 h-5 text-gray-400" />
                                         </button>
 
                                         <button
+                                            type="button"
                                             onClick={() => setShowDeleteModal(true)}
                                             className="w-full flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
                                                 <Trash2 className="w-5 h-5 text-red-600" />
                                                 <div className="text-left">
-                                                    <p className="font-medium text-red-800">Eliminar Cuenta</p>
-                                                    <p className="text-sm text-red-600">Esta acción no se puede deshacer</p>
+                                                    <p className="font-medium text-red-800">{t('settings_delete_account')}</p>
+                                                    <p className="text-sm text-red-600">{t('settings_delete_account_desc')}</p>
                                                 </div>
                                             </div>
                                             <AlertCircle className="w-5 h-5 text-red-400" />
@@ -575,10 +639,9 @@ export default function Settings() {
                                         <div className="flex items-start gap-3">
                                             <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
                                             <div>
-                                                <p className="font-medium text-blue-800">Información sobre tus datos</p>
+                                                <p className="font-medium text-blue-800">{t('settings_data_info')}</p>
                                                 <p className="text-sm text-blue-700 mt-1">
-                                                    Tus datos se almacenan de forma segura y solo se utilizan para mejorar tu experiencia en la plataforma.
-                                                    Nunca compartimos tu información con terceros sin tu consentimiento.
+                                                    {t('settings_data_info_text')}
                                                 </p>
                                             </div>
                                         </div>
@@ -590,14 +653,16 @@ export default function Settings() {
                             {activeTab !== 'data' && (
                                 <div className="flex gap-4 pt-6 border-t mt-8">
                                     <button
+                                        type="button"
                                         onClick={resetSettings}
                                         disabled={loading}
                                         className="flex-1 flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                                     >
                                         <RefreshCw className="w-5 h-5" />
-                                        Restaurar Valores Predeterminados
+                                        {t('btn_reset')}
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={saveSettings}
                                         disabled={loading}
                                         className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
@@ -610,7 +675,7 @@ export default function Settings() {
                                         ) : (
                                             <>
                                                 <Save className="w-5 h-5" />
-                                                Guardar Cambios
+                                                {t('btn_save')}
                                             </>
                                         )}
                                     </button>
@@ -629,15 +694,15 @@ export default function Settings() {
                                     <Trash2 className="w-6 h-6 text-red-600" />
                                 </div>
                                 <h3 className="text-xl font-bold text-center text-gray-800 mb-2">
-                                    ¿Eliminar tu cuenta?
+                                    {t('msg_confirm_delete')}
                                 </h3>
                                 <p className="text-center text-gray-600 mb-6">
-                                    Esta acción es permanente y no se puede deshacer. Todos tus datos serán eliminados.
+                                    {t('msg_confirm_delete_text')}
                                 </p>
                                 
                                 <div className="mb-6">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Para confirmar, escribe tu nombre de usuario: <span className="font-bold">{currentUser?.username}</span>
+                                        {t('msg_confirm_username')} <span className="font-bold">{currentUser?.username}</span>
                                     </label>
                                     <input
                                         type="text"
@@ -650,21 +715,23 @@ export default function Settings() {
 
                                 <div className="flex gap-3">
                                     <button
+                                        type="button"
                                         onClick={() => {
                                             setShowDeleteModal(false);
                                             setDeleteConfirmation('');
                                         }}
                                         className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                                     >
-                                        Cancelar
+                                        {t('btn_cancel')}
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={handleDeleteAccount}
                                         disabled={deleteConfirmation !== currentUser?.username}
                                         className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
                                         <Trash2 className="w-4 h-4" />
-                                        Eliminar Cuenta
+                                        {t('settings_delete_account')}
                                     </button>
                                 </div>
                             </div>
