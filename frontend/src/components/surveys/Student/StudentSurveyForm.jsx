@@ -37,7 +37,7 @@ export default function StudentSurveyForm() {
   const [notification, setNotification] = useState(null);
 
   // Opciones para los selects
-  const chatbotOptions = ['ChatGPT 3.5', 'ChatGPT 4', 'Bing Chat', 'Bard', 'Claude'];
+  const chatbotOptions = ['ChatGPT 3.5', 'ChatGPT 4', 'Bing Chat', 'Blackbox', 'Claude', 'Gemini'];
   const frequencyOptions = ['Nunca', 'Casi nunca', 'Ocasionalmente', 'Frecuentemente', 'Muy frecuentemente'];
   const tasksOptions = [
     'Comprender conceptos',

@@ -43,7 +43,7 @@ export default function TeacherSurveyForm() {
   const [notification, setNotification] = useState(null);
 
   // Opciones para los selects y checkboxes
-  const chatbotOptions = ['ChatGPT 3.5', 'ChatGPT 4', 'Bing Chat', 'Bard', 'Claude', 'Gemini'];
+  const chatbotOptions = ['ChatGPT 3.5', 'ChatGPT 4', 'Bing Chat', 'Blackbox', 'Claude', 'Gemini'];
   
   const coursesOptions = [
     'Programación',

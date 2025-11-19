@@ -125,13 +125,3 @@ const startServer = async () => {
 startServer();
 
 export default app;
-
-/*
-╔═══════════════════════════════════════╗
-║      SERVIDOR CORRIENDO               ║
-║      Puerto: ${PORT}                     ║
-║      URL: http://localhost:${PORT}       ║
-║      Base de datos: ${dbTernary}         ║
-║      ${new Date().toLocaleString()}             ║
-╚═══════════════════════════════════════╝
-*/
